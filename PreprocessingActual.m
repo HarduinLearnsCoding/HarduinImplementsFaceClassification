@@ -183,3 +183,4 @@ disp(knntesting);
 
 %% MDA AND PCA TIME
 
+[datavisualise,mean0,scatterbetween,scatterwithin,prior]=MDAsolver(facesfinale,mean,covar);
