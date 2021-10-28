@@ -1,35 +1,64 @@
-function [classifiedKNN,testingarray,trainingarray,distance,index,labels,error]=KNN(testingsorted,trainingsorted,k,Numtest)
+function [classifiedKNN,testingarray,trainingarray,distancetruncated,indextruncated,Labels,ActualLabels,error]=KNN(testingsorted,trainingsorted,k,Numtest)
+
+
 [l,z]=size(testingsorted(1).Data);
 [m,~]=size(trainingsorted);
 Numtrain=200-Numtest;
 testingarray=zeros(Numtest*3,l);
-prediction=0;
 trainingarray=zeros(Numtrain*3,l);
 distance=[];
 index=[];
-labels=[];
+Labels=zeros(Numtest*3,k);
+ActualLabels=zeros(Numtest*3,k);
 classifiedKNN=[];
 count=0;
+distancetruncated=zeros(Numtest*3,k);
+indextruncated=zeros(Numtest*3,k);
+tempnew=0;
+
+
+
 for i=1:Numtest*3
+
     testingarray(i,:)=testingsorted(i).Data.';
+
 end
+
 for j=1:Numtrain*3
+    
     trainingarray(j,:)=trainingsorted(j).Data.';
+
+end
+
+for i=1:Numtest*3
+    for j=1:Numtrain*3
+%         distance(i,j)=[testingsorted(i).Label trainingsorted(j).Label sqrt(sum((testingarray(i,:)-trainingarray(i,:)).^2))];
+        distance(i,j)=sqrt(sum((testingarray(i,:)-trainingarray(j,:)).^2));
+    end
+    [distance(i,:),index(i,:)]=sort(distance(i,:));
+    distancetruncated(i,:)=distance(i,1:k);
+    indextruncated(i,:)=index(i,1:k);
+    for z=1:length(indextruncated(i,:))
+        tempnew=indextruncated(i,z);
+        Labels(i,z)=trainingsorted(tempnew).Label;
+    end
+    Labels(i,:)=mode(Labels(i,:));
+    ActualLabels(i,:)=testingsorted(i).Label;
+%     distance=sortrows(distance,3);
+%     distance=distance(1:k,:);
+%     index=mode(distance(:,2));
+%     classifiedKNN=[classifiedKNN struct('Predictedlabel',index,'ActualLabel',distance(1,1))];
+%     if index~=distance(1,1)
+%         count=count+1;
+    
 end
 for i=1:Numtest*3
-    distance=[];
-    for j=1:Numtrain*3
-        distance=[distance; testingsorted(i).Label trainingsorted(j).Label abs(norm(testingarray(i)-trainingarray(j)))];
-    end
-    distance=sortrows(distance,3);
-    distance=distance(1:k,:);
-    index=mode(distance(:,2));
-    classifiedKNN=[classifiedKNN struct('Predictedlabel',index,'ActualLabel',distance(1,1))];
-    if index~=distance(1,1)
+    if ActualLabels(i,1)~=Labels(i,1)
         count=count+1;
     end
 end
 error=(count/(Numtest*3))*100;
+
 
 % for i=1:Numtest*3
 %     distance=[];

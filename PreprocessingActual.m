@@ -121,14 +121,31 @@ end
 
 %ERROR BAYES FINAL
 
-% bayestesting=sprintf('Percentage of error for Bayes Classifier is %f',error);
-% disp(bayestesting);
+bayestesting=sprintf('Percentage of error for Bayes Classifier is %f',error);
+disp(bayestesting);
 %% KNN TRYING
 
 
-k=4;
-[classifiedKNN,testingarray,trainingarray,distance,index,labels,errorknn]=KNN(testingsorted,trainingsorted,k,Numtest);
+k=5;
+Numtrain=200-Numtest;
+[classifiedKNN,testingarray,trainingarray,distancetruncated,indextruncated,labels,actuallabels,errorknn]=KNN(testingsorted,trainingsorted,k,Numtest);
 
+% for i=1:Numtest*3
+% 
+%     testingarray(i,:)=testingsorted(i).Data.';
+%     t_labels(i,:)=testingsorted(i).Label;
+% 
+% end
+% 
+% for j=1:Numtrain*3
+%     
+%     trainingarray(j,:)=trainingsorted(j).Data.';
+%     labels(j,:)=trainingsorted(j).Label;
+% 
+% end
+% 
+% [~,~,accuracy]=KNN_(k,trainingarray,labels,testingarray,t_labels);
+% disp(accuracy);
 knntesting=sprintf('Percentage of error for KNN Classifier is %f',errorknn);
 disp(knntesting);
 
@@ -163,4 +180,6 @@ disp(knntesting);
 % for i=1:1:number
 %     testingP1(i,1)=struct('Label',n,'Data',facesfinale(n).Illumination);
 % end
+
+%% MDA AND PCA TIME
 
