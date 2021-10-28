@@ -10,11 +10,28 @@ dimnface=24*21;
 faces=zeros(dimnface,3,200);
 facesfinale=[];
 y=1:1:200;
+NumofClasses=0;
+
+z=input("Enter the classification task (1 : Face type or 2 : Person) \n");
+
+switch z
+    case 1
+        NumofClasses=3;
+    case 2
+        NumofClasses=200;
+end
+
 
 %Classification Tasks : Person from image  and Neutral vs Expression
 %Creating labels 
 %Labels should increase for each row for first classification
 %Labels should be 1,2,3,1,2,3 for second classification type
+%% MDA Testing
+
+facetemp=face;
+% [facesMDA,datavisualise,mean0,scatterbetween,scatterwithin,prior,eigenvalues,eigenvectors,eigenvaluesdiag,eigenvectorstr]=MDAsolver(facetemp,mean,covar,NumofClasses);
+% % disp(size(face));
+
 
 for n=1:200
     facesfinale= cat(2,facesfinale,struct('Problem1Label',n,'Neutral',reshape(face(:,:,3*n-2), [dimnface,1]),'Expressive',reshape(face(:,:,3*n-1), [dimnface,1]),'Illumination',reshape(face(:,:,3*n), [dimnface,1])));
@@ -100,7 +117,6 @@ end
 
 %SINGULAR COVARIANCE
 
-
 [m,~]=size(mean);
 pseudoinv=[];
 
@@ -108,6 +124,11 @@ for i=1:m
     pseudoinv=[pseudoinv struct('Label', covar(i).Label, 'Data', pinv(covar(i).ClassCov))];
 end
 
+%% MDA AND PCA TIME
+
+[facesMDA,datavisualise,mean0,scatterbetween,scatterwithin,prior,eigenvalues,eigenvectors,eigenvaluesdiag,eigenvectorstr]=MDAsolver(facetemp,mean,covar,NumofClasses);
+
+%% Maybe useful deleted stuff
 
 % pseudoinv=pinv(covar(3).ClassCov);
 % disp(det(pseudoinv));
@@ -181,6 +202,3 @@ disp(knntesting);
 %     testingP1(i,1)=struct('Label',n,'Data',facesfinale(n).Illumination);
 % end
 
-%% MDA AND PCA TIME
-
-[datavisualise,mean0,scatterbetween,scatterwithin,prior]=MDAsolver(facesfinale,mean,covar);

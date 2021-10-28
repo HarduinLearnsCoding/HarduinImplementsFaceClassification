@@ -10,14 +10,31 @@ dimnface=24*21;
 faces=zeros(dimnface,3,200);
 facesfinale=[];
 y=1:1:200;
+NumofClasses=0;
+
+z=input("Enter the classification task (1 : Face type or 2 : Person) \n");
+
+switch z
+    case 1
+        NumofClasses=3;
+    case 2
+        NumofClasses=200;
+end
+
 
 %Classification Tasks : Person from image  and Neutral vs Expression
 %Creating labels 
 %Labels should increase for each row for first classification
 %Labels should be 1,2,3,1,2,3 for second classification type
+%% MDA Testing
+
+facetemp=face;
+[facesMDA,datavisualise,mean0,scatterbetween,scatterwithin,prior,eigenvalues,eigenvectors,eigenvaluesdiag,eigenvectorstr]=MDAsolver(facetemp,mean,covar,NumofClasses);
+% % disp(size(face));
+
 
 for n=1:200
-    facesfinale= cat(2,facesfinale,struct('Problem1Label',n,'Neutral',reshape(face(:,:,3*n-2), [dimnface,1]),'Expressive',reshape(face(:,:,3*n-1), [dimnface,1]),'Illumination',reshape(face(:,:,3*n), [dimnface,1])));
+    facesfinale= cat(2,facesfinale,struct('Problem1Label',n,'Neutral',reshape(facesMDA(:,:,3*n-2), [dimnface,1]),'Expressive',reshape(facesMDA(:,:,3*n-1), [dimnface,1]),'Illumination',reshape(facesMDA(:,:,3*n), [dimnface,1])));
 end
 
 %disp(size(faces(:,1,:))); 504 1 200
@@ -183,4 +200,4 @@ disp(knntesting);
 
 %% MDA AND PCA TIME
 
-[datavisualise,mean0,scatterbetween,scatterwithin,prior]=MDAsolver(facesfinale,mean,covar);
+%[facesMDA,datavisualise,mean0,scatterbetween,scatterwithin,prior,eigenvalues,eigenvectors,eigenvaluesdiag,eigenvectorstr]=MDAsolver(facetemp,mean,covar,NumofClasses);
