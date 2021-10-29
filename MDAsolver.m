@@ -23,7 +23,7 @@ end
 for i=1:m
     scatterbetween=scatterbetween+priors.*(mean(i,:)-mean0).'*(mean(i,:)-mean0);
 end
-facestemp=reshape(facestemp,[504,600]);
+facestemp=reshape(facestemp,[600,504]);
 
 % for i=1:
 % 
@@ -36,7 +36,7 @@ matrixcreated=pinv(scatterwithin)*scatterbetween;
 eigenvaluesdiag=diag(abs(eigenvalues));
 eigenvaluesdiag=eigenvaluesdiag(1:numclasses-1,:);
 eigenvectorstr=eigenvectors(:,1:numclasses-1);
-facesMDA=eigenvectorstr.'*facestemp;
+facesMDA=(facestemp*eigenvectorstr);
 
 
 end

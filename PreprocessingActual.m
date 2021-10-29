@@ -12,12 +12,12 @@ facesfinale=[];
 y=1:1:200;
 NumofClasses=0;
 
-z=input("Enter the classification task (1 : Face type or 2 : Person) \n");
+z=input("Enter the classification task (1 : Person or 2 : Face Type) \n");
 
 switch z
-    case 1
-        NumofClasses=3;
     case 2
+        NumofClasses=3;
+    case 1
         NumofClasses=200;
 end
 
@@ -26,12 +26,9 @@ end
 %Creating labels 
 %Labels should increase for each row for first classification
 %Labels should be 1,2,3,1,2,3 for second classification type
-%% MDA Testing
+%% Struct manipulation
 
 facetemp=face;
-% [facesMDA,datavisualise,mean0,scatterbetween,scatterwithin,prior,eigenvalues,eigenvectors,eigenvaluesdiag,eigenvectorstr]=MDAsolver(facetemp,mean,covar,NumofClasses);
-% % disp(size(face));
-
 
 for n=1:200
     facesfinale= cat(2,facesfinale,struct('Problem1Label',n,'Neutral',reshape(face(:,:,3*n-2), [dimnface,1]),'Expressive',reshape(face(:,:,3*n-1), [dimnface,1]),'Illumination',reshape(face(:,:,3*n), [dimnface,1])));
@@ -103,11 +100,12 @@ tablenewtest = struct2table(testing);
 sortedtabletest = sortrows(tablenewtest, 'Label'); 
 testingsorted = table2struct(sortedtabletest); 
 
-[mean,covar]=standardestimators(trainingsorted,x,1);
+[mean,covar]=standardestimators(trainingsorted,x,z);
 
 [l,m]=size(covar(1).ClassCov);
 
 [p,n]=size(covar);
+%% Playing with covariances
 
 for i=1:n
     lambda=0.5*ones(1,l);
@@ -117,6 +115,7 @@ end
 
 %SINGULAR COVARIANCE
 
+
 [m,~]=size(mean);
 pseudoinv=[];
 
@@ -124,11 +123,6 @@ for i=1:m
     pseudoinv=[pseudoinv struct('Label', covar(i).Label, 'Data', pinv(covar(i).ClassCov))];
 end
 
-%% MDA AND PCA TIME
-
-[facesMDA,datavisualise,mean0,scatterbetween,scatterwithin,prior,eigenvalues,eigenvectors,eigenvaluesdiag,eigenvectorstr]=MDAsolver(facetemp,mean,covar,NumofClasses);
-
-%% Maybe useful deleted stuff
 
 % pseudoinv=pinv(covar(3).ClassCov);
 % disp(det(pseudoinv));
@@ -137,14 +131,16 @@ end
 
 % disp(mean);
 % disp(size(mean));
-% 
+%% Bayes Classical
+
+
 [classifiedBayes,values,error]=Bayes(testing,mean,covar,Numtest);
 
 %ERROR BAYES FINAL
 
 bayestesting=sprintf('Percentage of error for Bayes Classifier is %f',error);
 disp(bayestesting);
-%% KNN TRYING
+%% KNN Classical
 
 
 k=5;
@@ -169,6 +165,131 @@ Numtrain=200-Numtest;
 % disp(accuracy);
 knntesting=sprintf('Percentage of error for KNN Classifier is %f',errorknn);
 disp(knntesting);
+
+
+
+%% MDA AND PCA TIME
+
+for n = 1:1:200
+   facesMDAmean(n*3-2,1) = struct('Label', 1, 'Data', facesfinale(n).Neutral);
+   facesMDAmean(n*3-1,1) = struct('Label', 2, 'Data', facesfinale(n).Expressive);
+   facesMDAmean(n*3,1)   = struct('Label', 3, 'Data', facesfinale(n).Illumination);
+end
+tablenewnew = struct2table(facesMDAmean); 
+sortedtableMDA = sortrows(tablenewnew, 'Label'); 
+facesMDAmeansorted = table2struct(sortedtableMDA); 
+
+[meanwhole,covarwhole]=standardestimators(facesMDAmeansorted,200,z);
+[facesMDA,datavisualise,mean0,scatterbetween,scatterwithin,prior,eigenvalues,eigenvectors,eigenvaluesdiag,eigenvectorstr]=MDAsolver(facetemp,meanwhole,covarwhole,NumofClasses);
+facesfinaleMDA=[];
+
+for n=1:200
+    facesfinaleMDA= cat(2,facesfinaleMDA,struct('Problem1Label',n,'Neutral',facesMDA(3*n-2,:),'Expressive',facesMDA(3*n-1,:),'Illumination',facesMDA(3*n,:)));
+end
+
+xMDA=x;  %Random Training set size 
+NumtestMDA=200-xMDA;       %Random Testing set size
+
+% training=vertcat(facesfinale.Neutral,facesfinale.Expressive,facesfinale.Illumination);
+% The above statement can be used as well to create a column vector of all
+% the feature vectors. The loop is resource consuming hence the following
+% option has been chosen
+
+% disp(x);
+
+%1 represents Neutral, 2 Expressive and 3 Illuminated
+
+for n = 1:1:xMDA
+   trainingMDA(n*3-2,1) = struct('Label', 1, 'Data', (facesfinaleMDA(n).Neutral).');
+   trainingMDA(n*3-1,1) = struct('Label', 2, 'Data', (facesfinaleMDA(n).Expressive).');
+   trainingMDA(n*3,1)   = struct('Label', 3, 'Data', (facesfinaleMDA(n).Illumination).');
+end
+
+n=1;
+while n+xMDA<=200
+   testingMDA(n*3-2,1) = struct('Label', 1, 'Data', (facesfinaleMDA(n+xMDA).Neutral).');
+   testingMDA(n*3-1,1) = struct('Label', 2, 'Data', (facesfinaleMDA(n+xMDA).Expressive).');
+   testingMDA(n*3,1)   = struct('Label', 3, 'Data', (facesfinaleMDA(n+xMDA).Illumination).');
+   n=n+1;
+end
+
+tablenew = struct2table(trainingMDA); 
+sortedtable = sortrows(tablenew, 'Label'); 
+trainingsortedMDA = table2struct(sortedtable); 
+
+tablenewtest = struct2table(testingMDA); 
+sortedtabletest = sortrows(tablenewtest, 'Label'); 
+testingsortedMDA = table2struct(sortedtabletest); 
+
+[meanMDA,covarMDA]=standardestimators(trainingsortedMDA,xMDA,z);
+
+[l,~]=size(covarMDA(1).ClassCov);
+
+[p,n]=size(covarMDA);
+
+for i=1:n
+    lambdaMDA=0.5*ones(1,l);
+    covarMDA(i).ClassCov=covarMDA(i).ClassCov + diag(lambdaMDA);
+%     disp(det(covar(i).ClassCov));
+end
+
+%SINGULAR COVARIANCE
+
+[m,~]=size(meanMDA);
+pseudoinvMDA=[];
+
+
+for i=1:m
+    pseudoinvMDA=[pseudoinvMDA struct('Label', covarMDA(i).Label, 'Data', pinv(covarMDA(i).ClassCov))];
+end
+
+%% Bayes MDA
+
+% pseudoinv=pinv(covar(3).ClassCov);
+% disp(det(pseudoinv));
+
+% disp([size(trainingsorted),size(testingsorted),x,Numtest]);
+
+% disp(mean);
+% disp(size(mean));
+% 
+[classifiedBayes,values,error]=Bayes(testingMDA,meanMDA,covarMDA,NumtestMDA);
+
+%ERROR BAYES FINAL
+
+bayestestingMDA=sprintf('Percentage of error for Bayes Classifier with MDA is %f',error);
+disp(bayestestingMDA);
+
+%% KNN MDA
+
+kMDA=5;
+NumtrainMDA=200-NumtestMDA;
+[classifiedKNN,testingarray,trainingarray,distancetruncated,indextruncated,labels,actuallabels,errorknn]=KNN(testingsortedMDA,trainingsortedMDA,kMDA,NumtestMDA);
+
+% for i=1:Numtest*3
+% 
+%     testingarray(i,:)=testingsorted(i).Data.';
+%     t_labels(i,:)=testingsorted(i).Label;
+% 
+% end
+% 
+% for j=1:Numtrain*3
+%     
+%     trainingarray(j,:)=trainingsorted(j).Data.';
+%     labels(j,:)=trainingsorted(j).Label;
+% 
+% end
+% 
+% [~,~,accuracy]=KNN_(k,trainingarray,labels,testingarray,t_labels);
+% disp(accuracy);
+knntestingMDA=sprintf('Percentage of error for KNN Classifier with MDA is %f',errorknn);
+disp(knntestingMDA);
+
+
+
+
+%% Maybe useful deleted stuff
+
 
 % [l,~]=size(trainingsorted(1).Data);
 % [covarfixed]=regularise(covar,l);
@@ -201,4 +322,3 @@ disp(knntesting);
 % for i=1:1:number
 %     testingP1(i,1)=struct('Label',n,'Data',facesfinale(n).Illumination);
 % end
-
