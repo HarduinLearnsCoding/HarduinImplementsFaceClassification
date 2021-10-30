@@ -3,35 +3,35 @@ function [classifiedKNN,testingarray,trainingarray,distancetruncated,indextrunca
 
 [l,z]=size(testingsorted(1).Data);
 [m,~]=size(trainingsorted);
-Numtrain=200-Numtest;
-testingarray=zeros(Numtest*3,l);
-trainingarray=zeros(Numtrain*3,l);
+Numtrain=600-Numtest;
+testingarray=zeros(Numtest,l);
+trainingarray=zeros(Numtrain,l);
 distance=[];
 index=[];
-Labels=zeros(Numtest*3,k);
-ActualLabels=zeros(Numtest*3,k);
+Labels=zeros(Numtest,k);
+ActualLabels=zeros(Numtest,k);
 classifiedKNN=[];
 count=0;
-distancetruncated=zeros(Numtest*3,k);
-indextruncated=zeros(Numtest*3,k);
+distancetruncated=zeros(Numtest,k);
+indextruncated=zeros(Numtest,k);
 tempnew=0;
 
 
 
-for i=1:Numtest*3
+for i=1:Numtest
 
     testingarray(i,:)=testingsorted(i).Data.';
 
 end
 
-for j=1:Numtrain*3
+for j=1:Numtrain
     
     trainingarray(j,:)=trainingsorted(j).Data.';
 
 end
 
-for i=1:Numtest*3
-    for j=1:Numtrain*3
+for i=1:Numtest
+    for j=1:Numtrain
 %         distance(i,j)=[testingsorted(i).Label trainingsorted(j).Label sqrt(sum((testingarray(i,:)-trainingarray(i,:)).^2))];
         distance(i,j)=sqrt(sum((testingarray(i,:)-trainingarray(j,:)).^2));
     end
@@ -52,12 +52,12 @@ for i=1:Numtest*3
 %         count=count+1;
     
 end
-for i=1:Numtest*3
+for i=1:Numtest
     if ActualLabels(i,1)~=Labels(i,1)
         count=count+1;
     end
 end
-error=(count/(Numtest*3))*100;
+error=(count/(Numtest))*100;
 
 
 % for i=1:Numtest*3
