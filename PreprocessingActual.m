@@ -267,28 +267,91 @@ disp(bayestestingMDA);
 kMDA=5;
 NumtrainMDA=200-NumtestMDA;
 [classifiedKNNMDA,testingarrayMDA,trainingarrayMDA,distancetruncatedMDA,indextruncatedMDA,labelsMDA,actuallabelsMDA,errorknnMDA]=KNN(testingsortedMDA,trainingsortedMDA,kMDA,NumtestMDA*3);
-
-% for i=1:Numtest*3
-% 
-%     testingarray(i,:)=testingsorted(i).Data.';
-%     t_labels(i,:)=testingsorted(i).Label;
-% 
-% end
-% 
-% for j=1:Numtrain*3
-%     
-%     trainingarray(j,:)=trainingsorted(j).Data.';
-%     labels(j,:)=trainingsorted(j).Label;
-% 
-% end
-% 
-% [~,~,accuracy]=KNN_(k,trainingarray,labels,testingarray,t_labels);
-% disp(accuracy);
 knntestingMDA=sprintf('Percentage of error for KNN Classifier with MDA is %f',errorknnMDA);
 disp(knntestingMDA);
 
+%%  PCA trying
+
+[facesPCA,covarPCA,eigenvaluesPCA,eigenvectorsPCA,eigenvaluesdiagPCA,eigenvectorstrPCA]=PCAsolver(facetemp,NumofClasses);
+
+facesfinalePCA=[];
+
+for n=1:200
+    facesfinalePCA= cat(2,facesfinalePCA,struct('Problem1Label',n,'Neutral',facesPCA(3*n-2,:),'Expressive',facesPCA(3*n-1,:),'Illumination',facesPCA(3*n,:)));
+end
+
+xPCA=x;  %Random Training set size 
+NumtestPCA=200-xPCA;       %Random Testing set size
+
+% training=vertcat(facesfinale.Neutral,facesfinale.Expressive,facesfinale.Illumination);
+% The above statement can be used as well to create a column vector of all
+% the feature vectors. The loop is resource consuming hence the following
+% option has been chosen
+
+% disp(x);
+
+%1 represents Neutral, 2 Expressive and 3 Illuminated
+
+for n = 1:1:xPCA
+   trainingPCA(n*3-2,1) = struct('Label', 1, 'Data', (facesfinalePCA(n).Neutral).');
+   trainingPCA(n*3-1,1) = struct('Label', 2, 'Data', (facesfinalePCA(n).Expressive).');
+   trainingPCA(n*3,1)   = struct('Label', 3, 'Data', (facesfinalePCA(n).Illumination).');
+end
+
+n=1;
+while n+xPCA<=200
+   testingPCA(n*3-2,1) = struct('Label', 1, 'Data', (facesfinalePCA(n+xPCA).Neutral).');
+   testingPCA(n*3-1,1) = struct('Label', 2, 'Data', (facesfinalePCA(n+xPCA).Expressive).');
+   testingPCA(n*3,1)   = struct('Label', 3, 'Data', (facesfinalePCA(n+xPCA).Illumination).');
+   n=n+1;
+end
+
+tablenew = struct2table(trainingPCA); 
+sortedtable = sortrows(tablenew, 'Label'); 
+trainingsortedPCA = table2struct(sortedtable); 
+
+tablenewtest = struct2table(testingPCA); 
+sortedtabletest = sortrows(tablenewtest, 'Label'); 
+testingsortedPCA = table2struct(sortedtabletest); 
+
+[meanPCA,covarPCA]=standardestimators(trainingsortedPCA,xPCA,z);
+
+[l,~]=size(covarPCA(1).ClassCov);
+
+[p,n]=size(covarPCA);
+
+for i=1:n
+    lambdaPCA=0.5*ones(1,l);
+    covarPCA(i).ClassCov=covarPCA(i).ClassCov + diag(lambdaPCA);
+%     disp(det(covar(i).ClassCov));
+end
+
+%SINGULAR COVARIANCE
+
+[m,~]=size(meanPCA);
+pseudoinvPCA=[];
 
 
+for i=1:m
+    pseudoinvPCA=[pseudoinvPCA struct('Label', covarMDA(i).Label, 'Data', pinv(covarPCA(i).ClassCov))];
+end
+
+%% Bayes PCA
+
+[classifiedBayesPCA,valuesPCA,errorPCA]=Bayes(testingPCA,meanPCA,covarPCA,NumtestPCA);
+
+%ERROR BAYES FINAL
+
+bayestestingPCA=sprintf('Percentage of error for Bayes Classifier with PCA is %f',errorPCA);
+disp(bayestestingPCA);
+
+%% KNN PCA
+
+kPCA=5;
+NumtrainPCA=200-NumtestPCA;
+[classifiedKNNPCA,testingarrayPCA,trainingarrayPCA,distancetruncatedPCA,indextruncatedPCA,labelsPCA,actuallabelsPCA,errorknnPCA]=KNN(testingsortedPCA,trainingsortedPCA,kPCA,NumtestPCA*3);
+knntestingPCA=sprintf('Percentage of error for KNN Classifier with MDA is %f',errorknnMDA);
+disp(knntestingPCA);
 
 %% Problem 1 Trying
 
