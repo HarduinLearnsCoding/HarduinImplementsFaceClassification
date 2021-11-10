@@ -3,7 +3,7 @@ function[facesPCA,covarPCA,eigenvaluesPCA,eigenvectorsPCA,eigenvaluesdiagPCA,eig
 newfacestemp=[];
 
 for i=1:600
-    newfacestemp(i,:)=reshape(facestemp(:,:,i),[1,504]);
+    newfacestemp(i,:)=reshape(facestemp(:,:,i),[504,1]);
 end
 
 covarPCA=cov(newfacestemp);

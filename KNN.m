@@ -1,9 +1,9 @@
-function [classifiedKNN,testingarray,trainingarray,distancetruncated,indextruncated,Labels,ActualLabels,error]=KNN(testingsorted,trainingsorted,k,Numtest)
+function [classifiedKNN,testingarray,trainingarray,distancetruncated,indextruncated,Labels,ActualLabels,error]=KNN(testingsorted,trainingsorted,k,Numtest,total)
 
 
 [l,z]=size(testingsorted(1).Data);
 [m,~]=size(trainingsorted);
-Numtrain=600-Numtest;
+Numtrain=total-Numtest;
 testingarray=zeros(Numtest,l);
 trainingarray=zeros(Numtrain,l);
 distance=[];
