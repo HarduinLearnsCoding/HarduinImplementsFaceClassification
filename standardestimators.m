@@ -7,29 +7,35 @@ switch problem
         classsum=zeros(size(trainingsorted(1).Data));
         covarsum=zeros(l,l);
         initiallabel=1;
+        count=0;
         for i=1:length(trainingsorted)
             if trainingsorted(i).Label==initiallabel
                 classsum=trainingsorted(i).Data+classsum;
+                count=count+1;
             else
-                mean=[mean classsum/x];
+                mean=[mean classsum/count];
                 classsum=zeros(size(trainingsorted(1).Data));
                 classsum=classsum+trainingsorted(i).Data;
                 initiallabel=trainingsorted(i).Label;
+                count=1;
             end
         end
-        mean=[mean classsum/x].';
+        mean=[mean classsum/count].';
         covarlabel=1;
+        count=0;
         for i=1:length(trainingsorted)
             if trainingsorted(i).Label==covarlabel
                 covarsum=(trainingsorted(i).Data-mean(covarlabel,:).')*(trainingsorted(i).Data+mean(covarlabel,:).').'+covarsum;
+                count=count+1;
             else
                 covar=[covar struct('Label', covarlabel, 'ClassCov', covarsum/x)];
                 covarsum=zeros(l,l);
                 covarlabel=trainingsorted(i).Label;
                 covarsum=covarsum+(trainingsorted(i).Data-mean(covarlabel,:).')*(trainingsorted(i).Data+mean(covarlabel,:).').';
+                count=1;
             end
         end
-        covar=[covar struct('Label', covarlabel, 'ClassCov', covarsum/x)];
+        covar=[covar struct('Label', covarlabel, 'ClassCov', covarsum/count)];
            
     case 2
         class1sum=zeros(size(trainingsorted(1).Data));

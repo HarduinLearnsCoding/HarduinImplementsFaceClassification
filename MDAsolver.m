@@ -1,4 +1,4 @@
-function[facesMDA,datavisualise,mean0,scatterbetween,scatterwithin,priors,eigenvalues,eigenvectors,eigenvaluesdiag,eigenvectorstr]=MDAsolver(facestemp,mean,covar,numclasses)
+function[facesMDA,datavisualise,mean0,scatterbetween,scatterwithin,priors,eigenvalues,eigenvectors,eigenvaluesdiag,eigenvectorstr]=MDAsolver(facestemp,mean,covar,numclasses,dimensions)
 
 [m,mcol]=size(mean);
 [y,~]=size(covar);
@@ -31,6 +31,7 @@ for i=1:600
     newfacestemp(i,:)=reshape(facestemp(:,:,i),[1,504]);
 end
 
+
 % for i=1:
 % 
 %     testingarray(i,:)=testingsorted(i).Data.';
@@ -49,8 +50,8 @@ matrixcreated=inv(scatterwithin)*scatterbetween;
 [eigenvalues, ind] = sort(eigenvalues,'descend');
 eigenvectors = eigenvectors(:, ind);
 eigenvaluesdiag=diag(abs(eigenvalues));
-eigenvaluesdiag=eigenvaluesdiag(1:numclasses-1,:);
-eigenvectorstr=eigenvectors(:,1:numclasses-1);
+eigenvaluesdiag=eigenvaluesdiag(1:dimensions-1,:);
+eigenvectorstr=eigenvectors(:,1:dimensions-1);
 facesMDA=(newfacestemp*eigenvectorstr);
 
 
