@@ -2,11 +2,11 @@ function[facesPCA,covarPCA,eigenvaluesPCA,eigenvectorsPCA,eigenvaluesdiagPCA,eig
 
 covarPCA=cov(facestemp);
 [eigenvectorsPCA,eigenvaluesPCA]=eig(covarPCA);
-[eigenvaluesPCA, ind] = sort(eigenvaluesPCA,'descend');
-eigenvectorsPCA = eigenvectorsPCA(:, ind);
 eigenvaluesdiagPCA=diag(abs(eigenvaluesPCA));
+[eigenvaluesdiagPCA, ind] = sort(eigenvaluesdiagPCA,'descend');
+eigenvectorsPCA = eigenvectorsPCA(:, ind);
 eigenvaluesdiagPCA=eigenvaluesdiagPCA(1:numclasses-1,:);
-eigenvectorstrPCA=eigenvectorsPCA(:,1:numclasses-1);
+eigenvectorstrPCA = eigenvectorsPCA(:,1:numclasses-1);
 facesPCA=(facestemp*eigenvectorstrPCA);
 
 end

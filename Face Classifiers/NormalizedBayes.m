@@ -1,4 +1,4 @@
-function [testingclassified,likelihood,error]=Bayes(testingsorted,mean,covar,Numtest)
+function [testingclassified,likelihood,error]=NormalizedBayes(testingsorted,mean,covar,Numtest,param)
 [l,~]=size(testingsorted(1).Data);
 [m,~]=size(mean);
 testingclassified=[];
@@ -6,7 +6,7 @@ likelihood=zeros(Numtest,m);
 for i=1:Numtest
     maxlikelihood=0;
     for j=1:m
-         likelihood(i,j)= det(covar(j).ClassCov)^-.5 * exp(-(.5)*((testingsorted(i).Data-(mean(j,:).')).')*(inv(covar(j).ClassCov))*(testingsorted(i).Data-(mean(j,:).')));
+       likelihood(i,j)= det(covar(j).ClassCov)^-.5 * exp(-(.5/param)*((testingsorted(i).Data-(mean(j,:).')).')*(inv(covar(j).ClassCov))*(testingsorted(i).Data-(mean(j,:).')));
     end
     [~,maxlikelihood]=max(likelihood(i,:));
     testingclassified=[ testingclassified struct('PredictedLabel', maxlikelihood, 'ActualLabel', testingsorted(i).Label, 'Data', testingsorted(i).Data)];

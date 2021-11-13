@@ -32,7 +32,6 @@ end
 
 for i=1:Numtest
     for j=1:Numtrain
-%         distance(i,j)=[testingsorted(i).Label trainingsorted(j).Label sqrt(sum((testingarray(i,:)-trainingarray(i,:)).^2))];
         distance(i,j)=sqrt(sum((testingarray(i,:)-trainingarray(j,:)).^2));
     end
     [distance(i,:),index(i,:)]=sort(distance(i,:));
@@ -44,12 +43,6 @@ for i=1:Numtest
     end
     Labels(i,:)=mode(Labels(i,:));
     ActualLabels(i,:)=testingsorted(i).Label;
-%     distance=sortrows(distance,3);
-%     distance=distance(1:k,:);
-%     index=mode(distance(:,2));
-%     classifiedKNN=[classifiedKNN struct('Predictedlabel',index,'ActualLabel',distance(1,1))];
-%     if index~=distance(1,1)
-%         count=count+1;
     
 end
 for i=1:Numtest
@@ -59,18 +52,6 @@ for i=1:Numtest
 end
 error=(count/(Numtest))*100;
 
-
-% for i=1:Numtest*3
-%     distance=[];
-%     for j=1:Numtrain*3
-%         distance=[distance struct('TrainingLabel',trainingsorted(j).Label,'ActualLabel',testingsorted(i).Label,'Distance',abs(norm(testingsorted(i).Data)-norm(trainingsorted(j).Data)))];
-%     end
-%     tableKNN=struct2table(distance);
-%     sortedtable = sortrows(tableKNN, 'Distance'); 
-%     distancesorted = table2struct(sortedtable);
-%     classifiedKNN=[classifiedKNN struct('PredictedLabel',mode(distancesorted.TrainingLabel),'ActualLabel',testingsorted(i).Label,'Data',testingsorted(i).Data)];
-%end
-% error=(count/Numtest)*100;
 end
 
 

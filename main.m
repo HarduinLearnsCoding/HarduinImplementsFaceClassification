@@ -246,9 +246,9 @@ disp(knntestingMDA);
 
 %% SVM Done
 
-%Step 1 Make Kernels Done
-%Step 2 Massage Data Done
-%Step 3 G matrix creation Done
+%Step 1 Make Kernels 
+%Step 2 Massage Data 
+%Step 3 G matrix creation 
 
 kerneltype=input(' \nEnter the kernel type (1: Linear Kernel 2: RBF Kernel 3: Polynomial Kernel) \n');
 
@@ -642,7 +642,7 @@ disp(errorada);
 
 %%  PCA reduction
 
-PCAdim=300;
+PCAdim=100;
 
 dimnface=504;
 
@@ -658,11 +658,11 @@ for i=1:Observationsize
     PCAdatacenter(i,:)=reshape(face(:,:,i),[dimnface,1]);
 end
 
-% for i=1:dimnface
-%     PCAdatacentered(:,i)=PCAdatacenter(:,i)-((sum(PCAdatacenter(:,i))/Observationsize)*ones(Observationsize,1));
-% end
+for i=1:dimnface
+    PCAdatacentered(:,i)=PCAdatacenter(:,i)-((sum(PCAdatacenter(:,i))/Observationsize)*ones(Observationsize,1));
+end
 
-[facesPCA,covarPCAfn,eigenvaluesPCA,eigenvectorsPCA,eigenvaluesdiagPCA,eigenvectorstrPCA]=PCAsolver(PCAdatacenter,PCAdim);
+[facesPCA,covarPCAfn,eigenvaluesPCA,eigenvectorsPCA,eigenvaluesdiagPCA,eigenvectorstrPCA]=PCAsolver(PCAdatacentered,PCAdim);
 
 facesfinalePCA=[];
 
@@ -720,21 +720,176 @@ kPCA=3;
 knntestingPCA=sprintf('Percentage of error for KNN Classifier with PCA is %f',errorknnPCA);
 disp(knntestingPCA);
 
-%% Classification task 1 Data Dataset
+%% Kernel SVM PCA 
+
+for n = 1:xSVM
+   trainingSVMPCA(n*2-1,1) = struct('Label', 1, 'Data', (facesfinalePCA(n).Neutral).');
+   trainingSVMPCA(n*2,1) = struct('Label', -1, 'Data', (facesfinalePCA(n).Expressive).');
+end
+
+n=1;
+while n+xSVM<=200
+   testingSVMPCA(n*2-1,1) = struct('Label', 1, 'Data', (facesfinalePCA(n+xSVM).Neutral).');
+   testingSVMPCA(n*2,1) = struct('Label', -1, 'Data', (facesfinalePCA(n+xSVM).Expressive).');
+   n=n+1;
+end
+
+sigma=7;
+r=4;
+kerneltypePCA=input(' \nEnter the kernel type with PCA (2: RBF Kernel 3: Polynomial Kernel) \n');
+[PredictedLabelSumPCA,errorPCASVM]=KfoldKernelSVMsolver(trainingSVMPCA,testingSVMPCA,kerneltypePCA,sigma,r);
+SVMtestingPCA=sprintf('\nPercentage of error for Kernel SVM with PCA is %f',errorPCASVM);
+disp(SVMtestingPCA);
+
+%% Linear SVM and Adaboost with PCA trying
+
+
+filler=10;
+NumClassifiers=20;
+iterations=NumClassifiers;
+[datasetSVMsize,~]=size(trainingSVMPCA);
+coefficient=zeros(iterations,1);
+[trainingSVMsamplesize,~]=size(trainingSVMPCA(1).Data);
+saveepsilon=zeros(iterations,1);
+weightwithiteration=ones(datasetSVMsize,1);
+weightwithiteration=weightwithiteration/datasetSVMsize;
+savingprivateryan=[];
+
+for iter=1:iterations
+ 
+        probabilitymatrix=weightwithiteration/sum(weightwithiteration.');
+        
+        tempcount=1:datasetSVMsize;
+        
+        selectedsubset=randsample(tempcount,ceil(2/3*datasetSVMsize),true,probabilitymatrix);
+
+        trainingSVMPCAboost = trainingSVMPCA(selectedsubset);
+        
+        savingprivateryan=[savingprivateryan struct('Data',trainingSVMPCAboost)];
+            
+        [coltrain,~]=size(trainingSVMPCAboost);
+            
+        matrixG=Gmatrix(trainingSVMPCAboost,filler,1,filler);
+            
+        f=ones(coltrain,1);
+
+        for i=1:coltrain
+                
+              yvectorboost(i,1)=trainingSVMPCAboost(i).Label;
+                
+        end
+
+            Aeq=yvectorboost.';
+            beq=0;
+            lb=zeros(1,coltrain);
+            A=[];
+            b=[];
+            x0=[];
+            ub=[];
+
+            options = optimset('Display', 'off');
+            alphaboost = quadprog(matrixG,f,A,b,Aeq,beq,lb,ub,x0,options);
+
+            [coltest,~]=size(trainingSVMPCA);
+            PredictedLabelSumAdaboostPCA=zeros(coltest,1);
+    
+            for i=1:coltest
+                
+                for j=1:coltrain
+                    
+                    PredictedLabelSumAdaboostPCA(i,1)=PredictedLabelSumAdaboostPCA(i,1)+alphaboost(j,1)*trainingSVMPCAboost(j).Label*linearkernel(trainingSVMPCAboost(j).Data,trainingSVMPCA(i).Data);
+                
+                end
+                
+            PredictedLabelSumAdaboostPCA(i,1)=sign(PredictedLabelSumAdaboostPCA(i,1));
+            
+            end
+            
+            errorsummation=0;
+            
+            for i=1:coltest
+                
+                errornewboost=0;
+                
+                if PredictedLabelSumAdaboostPCA(i,1)~=trainingSVMPCA(i).Label
+                    
+                    errornewboost=errornewboost+1;
+                    
+                end
+                
+                errornewboost=probabilitymatrix(i,1)*errornewboost;
+                
+                errorsummation= errorsummation + errornewboost;
+                
+            end
+            
+            epsilon=0;
+            
+            for i=1:coltest
+                
+                if PredictedLabelSumAdaboostPCA(i,1)~=trainingSVMPCA(i).Label
+            
+                    epsilon=epsilon+probabilitymatrix(i);
+                
+                end
+                
+            
+            end
+            
+            saveepsilon(iter)=epsilon;
+            
+            coefficient(iter)=0.5*log((1-epsilon)/epsilon);
+            
+            for i=1:coltest
+            
+                weightwithiteration(i,1)=weightwithiteration(i,1)*exp(-trainingSVMPCA(i).Label*coefficient(iter)*PredictedLabelSumAdaboostPCA(i,1));
+
+            end   
+                     
+end
+
+[SVMtestsize,~]=size(testingSVMPCA);
+AdaboosttestclassifierPCA=zeros(SVMtestsize,1);
+ClassifierX=[];
+[PredictedLabelsSVMfn]=AdaSVMsolver(trainingSVMPCA,testingSVMPCA);
+
+
+for iter=1:iterations
+        ClassifierX=AdaSVMsolver(savingprivateryan(iter).Data,testingSVMPCA);
+        AdaboosttestclassifierPCA=AdaboosttestclassifierPCA+coefficient(iter)*ClassifierX;
+end
+AdaboosttestclassifierPCA=sign(AdaboosttestclassifierPCA);
+    
+[sizeclassifiedada,~]=size(AdaboosttestclassifierPCA);
+
+error=0;
+
+for i=1:sizeclassifiedada
+    
+    if AdaboosttestclassifierPCA(i,1)~=testingSVMPCA(i).Label
+        
+        error=error+1;
+    
+    end
+    
+    
+end
+
+errorada=sprintf('Percentage of error for Linear SVM Classifier with Adaboost and PCA is %f',(error/sizeclassifiedada)*100);
+disp(errorada);
+
+ %% Classification task 1 Data Dataset (Less time consuming than POSE but higher error due to lower traintest samples)
     case 1
+        
+        subset1=input('Enter Dataset (1:Data 2:Pose)\n');
+        
+        switch subset1
+            
+            case 1
+                
         NumofClasses=200;
 
-% %% PROBLEM1 Labels?
-% % 
-% % x=randi([100 150]);  %Random Training set size 
-% % Numtest=200-x;       %Random Testing set size
-% 
-% % training=vertcat(facesfinale.Neutral,facesfinale.Expressive,facesfinale.Illumination);
-% % The above statement can be used as well to create a column vector of all
-% % the feature vectors. The loop is resource consuming hence the following
-% % option has been chosen
-% 
-% % disp(x);
+% %% PROBLEM1 
 
 number=200;
 facetemp=face;
@@ -760,6 +915,7 @@ for n=1:68
 end
 
 dimnillum=dimnpose;
+
 % illumsfinale=[];
 % 
 % for n=1:68
@@ -850,17 +1006,95 @@ end
 
 %ERROR BAYES FINAL
 
-bayestestingP1=sprintf('Percentage of error for Bayes Classifier is %f',errorP1);
+bayestestingP1=sprintf('Percentage of error for Bayes Classifier with MDA for dataset DATA is %f',errorP1);
 disp(bayestestingP1);
 %% KNN P1
 
 k=1;
 [classifiedKNN,testingarray,trainingarray,distancetruncated,indextruncated,labels,actuallabels,errorknn]=KNN(testingMDA,trainingMDA,k,NumtestMDA,600);
-knntesting=sprintf('Percentage of error for KNN Classifier is %f',errorknn);
+knntesting=sprintf('Percentage of error for KNN Classifier with MDA for dataset DATA is %f',errorknn);
+disp(knntesting);
+%% Bayes P1 PCA 
+
+%%  PCA reduction
+
+PCAdim=200;
+
+dimnface=504;
+
+[lface,bface,Observationsize]=size(face);
+
+PCAdatacenter=zeros(Observationsize,dimnface);
+
+PCAdatacentered=zeros(Observationsize,dimnface);
+
+meanPCAcenter=0;
+
+for i=1:Observationsize
+    PCAdatacenter(i,:)=reshape(face(:,:,i),[dimnface,1]);
+end
+
+for i=1:dimnface
+    PCAdatacentered(:,i)=PCAdatacenter(:,i)-((sum(PCAdatacenter(:,i))/Observationsize)*ones(Observationsize,1));
+end
+
+[facesPCA,covarPCAfn,eigenvaluesPCA,eigenvectorsPCA,eigenvaluesdiagPCA,eigenvectorstrPCA]=PCAsolver(PCAdatacentered,PCAdim);
+
+facesfinalePCA=[];
+
+for n=1:200
+    facesfinalePCA= cat(2,facesfinalePCA,struct('Label',n,'Neutral',facesPCA(3*n-2,:),'Expressive',facesPCA(3*n-1,:),'Illumination',facesPCA(3*n,:)));
+end
+
+xPCA=200;  %Random Training set size 
+NumtestPCA=200;       %Random Testing set size
+
+for n = 1:1:xPCA
+   trainingPCA(n*2-1,1) = struct('Label', n, 'Data', (facesfinalePCA(n).Neutral).');
+   trainingPCA(n*2,1) = struct('Label', n, 'Data', (facesfinalePCA(n).Expressive).');
+end
+
+n=1;
+while n<=200
+   testingPCA(n,1)   = struct('Label', n, 'Data', (facesfinalePCA(n).Illumination).');
+   n=n+1;
+end
+
+tablenew = struct2table(trainingPCA); 
+sortedtable = sortrows(tablenew, 'Label'); 
+trainingsortedPCA = table2struct(sortedtable); 
+
+tablenewtest = struct2table(testingPCA); 
+sortedtabletest = sortrows(tablenewtest, 'Label'); 
+testingsortedPCA = table2struct(sortedtabletest); 
+
+[meanPCA,covarPCA]=standardestimators(trainingsortedPCA,xPCA,1);
+
+[l,~]=size(covarPCA(1).ClassCov);
+
+[p,n]=size(covarPCA);
+
+for i=1:n
+        lambda=0.8*ones(1,l);
+        covarPCA(i).ClassCov=covarPCA(i).ClassCov + diag(lambda);
+end
+
+[classifiedBayesPCA,valuesPCA,errorPCA]=Bayes(testingsortedPCA,meanPCA,covarPCA,NumtestPCA);
+bayestestingPCA=sprintf('Percentage of error for Bayes Classifier with PCA for dataset DATA is %f',errorPCA);
+disp(bayestestingPCA);
+
+
+%% KNN P1 PCA
+
+k=1;
+[classifiedKNN,testingarray,trainingarray,distancetruncated,indextruncated,labels,actuallabels,errorknn]=KNN(testingPCA,trainingPCA,k,NumtestMDA,600);
+knntesting=sprintf('Percentage of error for KNN Classifier with PCA for dataset DATA is %f',errorknn);
 disp(knntesting);
 
-%% Classification Task 1 Pose Dataset
 
+%% Classification Task 1 Pose Dataset (Time consuming)
+
+            case 2
 posessamples=68;
 dimnpose=48*40;
 % size(pose)
@@ -891,16 +1125,21 @@ for i=1:1:posessamples
     testingP1pose(5*i,1)=struct('Label',i,'Data',posesfinale(i).Image13);
 end
 
-[meanP1pose,covarP1pose]=standardestimators(trainingP1pose,posessamples*8,1);
+tablenewnew = struct2table(trainingP1pose); 
+sortedtableMDA = sortrows(tablenewnew, 'Label'); 
+trainingP1posesorted = table2struct(sortedtableMDA); 
+
+[meanP1pose,covarP1pose]=standardestimators(trainingP1posesorted,posessamples*8,1);
 
 [l,m]=size(covarP1pose(1).ClassCov);
 
 [p,n]=size(covarP1pose);
 
 for i=1:n
-    lambda=0.5*ones(1,l);
-    covarP1pose(i).ClassCov=covarP1pose(i).ClassCov + diag(lambda);
-%     disp(det(covar(i).ClassCov));
+    while(det(covarP1pose(i).ClassCov) == 0)
+        lambda=0.5*ones(1,l);
+        covarP1pose(i).ClassCov=covarP1pose(i).ClassCov + diag(lambda);
+    end
 end
 
 Numtest=posessamples;
@@ -913,7 +1152,7 @@ for n = 1:1:68
    wholeP1poseMDA(n*13-8,1) = struct('Label', n, 'Data', posesfinale(n).Image5);
    wholeP1poseMDA(n*13-7,1) = struct('Label', n, 'Data', posesfinale(n).Image6);
    wholeP1poseMDA(n*13-6,1) = struct('Label', n, 'Data', posesfinale(n).Image7);
-   wholeP1poseMDA(n*13-5,1) = struct('Label', n, 'Data',   posesfinale(n).Image8);
+   wholeP1poseMDA(n*13-5,1) = struct('Label', n, 'Data', posesfinale(n).Image8);
    wholeP1poseMDA(n*13-4,1) = struct('Label', n, 'Data', posesfinale(n).Image9);
    wholeP1poseMDA(n*13-3,1) = struct('Label', n, 'Data', posesfinale(n).Image10);
    wholeP1poseMDA(n*13-2,1) = struct('Label', n, 'Data', posesfinale(n).Image11);
@@ -921,23 +1160,31 @@ for n = 1:1:68
    wholeP1poseMDA(n*13,1) = struct('Label', n, 'Data', posesfinale(n).Image13);
 end
 
-posetemp=pose;
-dimensionsposes=67;
+posetemp=[];
+count=0;
+
+for i=1:68
+    for j=1:13
+        count=count+1;
+        posetemp(count,:)=reshape(pose(:,:,j,i),[dimnpose,1]);
+    end
+end
+
 
 tablenewnew = struct2table(wholeP1poseMDA); 
 sortedtableMDA = sortrows(tablenewnew, 'Label'); 
 posesMDAmeansorted = table2struct(sortedtableMDA); 
 
-[meanwholeMDA,covarwholeMDA]=standardestimators(posesMDAmeansorted,68,z);
-[posesMDA,datavisualise,mean0,scatterbetween,scatterwithin,prior,eigenvalues,eigenvectors,eigenvaluesdiag,eigenvectorstr]=poseMDAsolver(posetemp,meanwholeMDA,covarwholeMDA,68,dimensionsposes);
+[meanwholeMDA,covarwholeMDA]=standardestimators(posesMDAmeansorted,68*13,1);
+[posesMDA,datavisualise,mean0,scatterbetween,scatterwithin,prior,eigenvalues,eigenvectors,eigenvaluesdiag,eigenvectorstr]=poseMDAsolver(posetemp,meanwholeMDA,covarwholeMDA,68,68);
 posesfinaleMDA=[];
 
 for n=1:68
-      posesfinaleMDA= cat(1,posesfinaleMDA,struct('Image1',posesMDA(:,:,1,n),'Image2',posesMDA(:,:,2,n),'Image3',posesMDA(:,:,3,n),'Image4',posesMDA(:,:,4,n),'Image5',posesMDA(:,:,5,n),'Image6',posesMDA(:,:,6,n),'Image7',posesMDA(:,:,7,n),'Image8',posesMDA(:,:,8,n),'Image9',posesMDA(:,:,9,n),'Image10',posesMDA(:,:,10,n),'Image11',posesMDA(:,:,11,n),'Image12',posesMDA(:,:,12,n),'Image13',posesMDA(:,:,13,n)));
+      posesfinaleMDA= cat(1,posesfinaleMDA,struct('Image1',posesMDA(13*n-12,:),'Image2',posesMDA(13*n-11,:),'Image3',posesMDA(13*n-10,:),'Image4',posesMDA(13*n-9,:),'Image5',posesMDA(13*n-8,:),'Image6',posesMDA(13*n-7,:),'Image7',posesMDA(13*n-6,:),'Image8',posesMDA(13*n-5,:),'Image9',posesMDA(13*n-4,:),'Image10',posesMDA(13*n-3,:),'Image11',posesMDA(13*n-2,:),'Image12',posesMDA(13*n-1,:),'Image13',posesMDA(13*n,:)));
 
 end
 
-Numtestpose=6;
+Numtestpose=5;
 xMDA=68;  
 NumtestMDA=68;
 count=0;
@@ -951,7 +1198,6 @@ for n = 1:1:68
    trainingP1poseMDA(n*8-2,1) = struct('Label', n, 'Data', posesfinaleMDA(n).Image6.');
    trainingP1poseMDA(n*8-1,1) = struct('Label', n, 'Data', posesfinaleMDA(n).Image7.');
    trainingP1poseMDA(n*8,1) = struct('Label', n, 'Data', posesfinaleMDA(n).Image8.');
-   count=count+1;
 end
 % disp(count);
 
@@ -973,34 +1219,122 @@ tablenewtest = struct2table(testingP1poseMDA);
 sortedtabletest = sortrows(tablenewtest, 'Label'); 
 testingsortedP1MDA = table2struct(sortedtabletest); 
 
-[meanMDApose,covarMDApose]=standardestimators(trainingP1poseMDA,xMDA*8,1);
+[meanMDApose,covarMDApose]=standardestimators(trainingsortedP1MDA,xMDA*8,1);
 
 [l,~]=size(covarMDApose(1).ClassCov);
 
 [p,n]=size(covarMDApose);
 
 for i=1:n
-    lambdaMDA=2*ones(1,l);
-    covarMDApose(i).ClassCov=covarMDApose(i).ClassCov + diag(lambdaMDA);
-%     disp(det(covar(i).ClassCov));
+    while(det(covarMDApose(i).ClassCov) == 0)
+        lambda=0.5*ones(1,l);
+        covarMDApose(i).ClassCov=covarMDApose(i).ClassCov + diag(lambda);
+    end
 end
-%% Bayes Pose P1 trying
 
-[BayesPCA,~,errorP1pose]=Bayes(testingP1poseMDA,meanMDApose,covarMDApose,Numtestpose);
+%% Bayes Pose P1 
+
+[BayesPoseP1,~,errorP1pose]=NormalizedBayes(testingsortedP1MDA,meanMDApose,covarMDApose,Numtestpose*xMDA,10^4);
 
 %ERROR BAYES FINAL
 
-bayestestingP1pose=sprintf('Percentage of error for Bayes Classifier with MDA for P1 pose is %f',errorP1pose);
+bayestestingP1pose=sprintf('Percentage of error for Bayes Classifier with MDA for dataset POSE is %f',errorP1pose);
 disp(bayestestingP1pose);
-%% KNN Pose P1 trying
+
+%% KNN Pose P1 
 
 k=3;
 [~,testingarray,trainingarray,distancetruncated,indextruncated,labels,actuallabelspose,errorknnpose]=KNN(testingsortedP1MDA,trainingP1poseMDA,k,NumtestMDA*5,NumtestMDA*13);
-knntestingpose=sprintf('Percentage of error for KNN Classifier with MDA for P1 pose is %f',errorknnpose);
+knntestingpose=sprintf('Percentage of error for KNN Classifier with MDA for dataset POSE is %f',errorknnpose);
 disp(knntestingpose);
 
+%% Bayes Pose P1 PCA trying
 
+PCAdim=400;
 
+dimnface=1920;
+
+[lface,bface,Peoplesize,Observationsize]=size(pose);
+
+PCAdatacenter=posetemp;
+
+PCAdatacentered=zeros(Observationsize*Peoplesize,dimnface);
+
+meanPCAcenter=0;
+posesfinalePCA=[];
+
+for i=1:dimnface
+    PCAdatacentered(:,i)=PCAdatacenter(:,i)-((sum(PCAdatacenter(:,i))/Observationsize*Peoplesize)*ones(Observationsize*Peoplesize,1));
+end
+
+[posesPCA,covarPCAfn,eigenvaluesPCA,eigenvectorsPCA,eigenvaluesdiagPCA,eigenvectorstrPCA]=PCAsolver(PCAdatacentered,PCAdim);
+
+facesfinalePCA=[];
+
+for n=1:68
+posesfinalePCA= cat(1,posesfinalePCA,struct('Image1',posesPCA(13*n-12,:),'Image2',posesPCA(13*n-11,:),'Image3',posesPCA(13*n-10,:),'Image4',posesPCA(13*n-9,:),'Image5',posesPCA(13*n-8,:),'Image6',posesPCA(13*n-7,:),'Image7',posesPCA(13*n-6,:),'Image8',posesPCA(13*n-5,:),'Image9',posesPCA(13*n-4,:),'Image10',posesPCA(13*n-3,:),'Image11',posesPCA(13*n-2,:),'Image12',posesPCA(13*n-1,:),'Image13',posesPCA(13*n,:)));    
+end
+
+xPCA=68;  %Random Training set size 
+NumtestPCA=68;       %Random Testing set size
+
+for n = 1:1:68
+   trainingP1posePCA(n*8-7,1) = struct('Label', n, 'Data', posesfinalePCA(n).Image1.');
+   trainingP1posePCA(n*8-6,1) = struct('Label', n, 'Data', posesfinalePCA(n).Image2.');
+   trainingP1posePCA(n*8-5,1) = struct('Label', n, 'Data', posesfinalePCA(n).Image3.');
+   trainingP1posePCA(n*8-4,1) = struct('Label', n, 'Data', posesfinalePCA(n).Image4.');
+   trainingP1posePCA(n*8-3,1) = struct('Label', n, 'Data', posesfinalePCA(n).Image5.');
+   trainingP1posePCA(n*8-2,1) = struct('Label', n, 'Data', posesfinalePCA(n).Image6.');
+   trainingP1posePCA(n*8-1,1) = struct('Label', n, 'Data', posesfinalePCA(n).Image7.');
+   trainingP1posePCA(n*8,1) = struct('Label', n, 'Data', posesfinalePCA(n).Image8.');
+end
+% disp(count);
+
+i=1;
+while i<=68
+    testingP1posePCA(5*i-4,1)=struct('Label',i,'Data',posesfinalePCA(i).Image9.');
+    testingP1posePCA(5*i-3,1)=struct('Label',i,'Data',posesfinalePCA(i).Image10.');
+    testingP1posePCA(5*i-2,1)=struct('Label',i,'Data',posesfinalePCA(i).Image11.');
+    testingP1posePCA(5*i-1,1)=struct('Label',i,'Data',posesfinalePCA(i).Image12.');
+    testingP1posePCA(5*i,1)=struct('Label',i,'Data',posesfinalePCA(i).Image13.');
+   i=i+1;
+end
+
+tablenew = struct2table(trainingP1posePCA); 
+sortedtable = sortrows(tablenew, 'Label'); 
+trainingsortedPCA = table2struct(sortedtable); 
+
+tablenewtest = struct2table(testingP1posePCA); 
+sortedtabletest = sortrows(tablenewtest, 'Label'); 
+testingsortedPCA = table2struct(sortedtabletest); 
+
+[meanPCA,covarPCA]=standardestimators(trainingsortedPCA,xPCA,1);
+
+[l,~]=size(covarPCA(1).ClassCov);
+
+[p,n]=size(covarPCA);
+
+for i=1:n
+        lambda=0.8*ones(1,l);
+        covarPCA(i).ClassCov=covarPCA(i).ClassCov + diag(lambda);
+end
+param=10^4;
+
+[BayesPoseP1PCA,~,errorP1posePCA]=NormalizedBayes(testingsortedPCA,meanPCA,covarPCA,68*5,param);
+
+%ERROR BAYES FINAL
+
+bayestestingP1pose=sprintf('Percentage of error for Bayes Classifier with PCA for dataset POSE is %f',errorP1posePCA);
+disp(bayestestingP1pose);
+
+%% KNN Pose P1 PCA trying
+
+k=1;
+[~,testingarray,trainingarray,distancetruncated,indextruncated,labels,actuallabelspose,errorknnpose]=KNN(testingsortedPCA,trainingsortedPCA,k,NumtestMDA*5,NumtestMDA*13);
+knntestingpose=sprintf('Percentage of error for KNN Classifier with PCA for dataset POSE is %f',errorknnpose);
+disp(knntestingpose);
+
+        end
 end
 
 

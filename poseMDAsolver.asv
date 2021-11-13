@@ -25,25 +25,9 @@ for i=1:m
     scatterbetween=scatterbetween+priors.*(mean(i,:)-mean0).'*(mean(i,:)-mean0);
 end
 
-newfacestemp=[];
 
-for i=1:68
-    for j=1:13
-        newfacestemp(:,:,j,i)=reshape(facestemp(:,:,j,i),[1,1920]);
-    end
-end
-
-
-% for i=1:
-% 
-%     testingarray(i,:)=testingsorted(i).Data.';
-% 
-% end
-
-
-lambdaMDA=0.5*ones(1,covarsize);
+lambdaMDA=2*ones(1,covarsize);
 scatterwithin=scatterwithin + diag(lambdaMDA);
-
 
 
 matrixcreated=inv(scatterwithin)*scatterbetween;
@@ -54,7 +38,9 @@ eigenvectors = eigenvectors(:, ind);
 eigenvaluesdiag=diag(abs(eigenvalues));
 eigenvaluesdiag=eigenvaluesdiag(1:dimensions-1,:);
 eigenvectorstr=eigenvectors(:,1:dimensions-1);
-facesMDA=pagemtimes(newfacestemp,eigenvectorstr);
+facesMDA=facestemp*eigenvectorstr;
+
+
 
 
 end
