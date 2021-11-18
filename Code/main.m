@@ -1,7 +1,7 @@
 %% Main Script
+
 % Evaluating the errors of different classifier based on the given Face
 % recognition tasks
-
 
 %% Data Processing
 
@@ -17,18 +17,19 @@ facesfinale=[];
 y=1:1:200;
 NumofClasses=0;
 
-z=input("Enter the classification task (1 : Person or 2 : Face Type) \n");
+z=input("Enter the classification task (1: Person Classification or 2 : Neutral v/s Expressive) \n");
 
 switch z
     case 2
         NumofClasses=3;
     
 %Classification Tasks : Person from image  and Neutral vs Expression
+
+
 %Creating labels 
 %Labels should increase for each row for first classification
 %Labels should be 1,2,3,1,2,3 for second classification type
-%% Struct manipulation
-
+%% Working with Structs
 facetemp=face;
 
 for n=1:200
@@ -57,7 +58,7 @@ for n=1:68
 end
 
 
-%% Training-Testing partition (Operating only on FACES rn)
+%% Training-Testing partition 
 
 x=randi([100 120]);  %Random Training set size 
 Numtest=200-x;       %Random Testing set size
@@ -105,7 +106,7 @@ testingsorted = table2struct(sortedtabletest);
 
 [p,n]=size(covar);
 
-%% Playing with covariances
+%% Playing with singular covariances
 
 for i=1:n
     lambda=0.92*ones(1,l);
@@ -131,14 +132,14 @@ end
 
 % disp(mean);
 % disp(size(mean));
-%% Bayes Classical
+%% Bayes Classical without Dimn Redn
 
 
 [classifiedBayes,values,error]=Bayes(testingsorted,mean,covar,Numtest*2);
 bayestesting=sprintf('\nPercentage of error for Bayes Classifier is %f',error);
 disp(bayestesting);
 
-%% KNN Classical
+%% KNN Classical without Dimn Redn
 
 
 k=5;
@@ -149,7 +150,7 @@ disp(knntesting);
 
 
 
-%% MDA(me) time
+%% MDA operations
 
 for n = 1:1:200
    facesMDAmean(n*3-2,1) = struct('Label', 1, 'Data', facesfinale(n).Neutral);
@@ -171,13 +172,6 @@ end
 
 xMDA=x;  %Random Training set size 
 NumtestMDA=200-xMDA;       %Random Testing set size
-
-% training=vertcat(facesfinale.Neutral,facesfinale.Expressive,facesfinale.Illumination);
-% The above statement can be used as well to create a column vector of all
-% the feature vectors. The loop is resource consuming hence the following
-% option has been chosen
-
-% disp(x);
 
 %1 represents Neutral, 2 Expressive and 3 Illuminated
 
@@ -244,7 +238,7 @@ knntestingMDA=sprintf('Percentage of error for KNN Classifier with MDA is %f',er
 disp(knntestingMDA);
 
 
-%% SVM Done
+%% Kernel SVM
 
 %Step 1 Make Kernels 
 %Step 2 Massage Data 
@@ -346,162 +340,165 @@ errorSVM=(errornew/coltest)*100;
 errorSVM=sprintf('\nPercentage of error for Kernel SVM Classifier with MDA (without any cross validation) is %f',errorSVM);
 disp(errorSVM);
 
-%% K fold CV (Time consuming) Commented out?
+%% K fold CV (Time consuming) Commented out
 
-% k=3;
-% 
-% %For high k the program runs for a long time.
-% 
-% %For the polynomial kernel, the program runs for a longer time than the RBF
-% 
-% kerneltype=input(' \nEnter the kernel type (2: RBF Kernel 3: Polynomial Kernel) \n');
-% c = cvpartition(200,'KFold',k);
-% trainingdataKfold=[];
-% testingdataKfold=[];
-% errorSVM=0;
-% count=0;
-% PredictedLabelSum=[];
-% setiter=[0.1 0.7 1 3 15 50];
-% iterationvar=exp(0.05):exp(1):exp(3.05);
-% parameterval=0;
-% avgerror=ones(5,1);
-% 
-% countvar=1;
-% 
-% switch kerneltype
-%     
-%     case 2
-%         
-% for variable=[0.05 1.05 3.05 20]
-%     errorSVM=0;
-%     count=0;
-%     errorSVMiter=0;
-%     
-% for i=1:k
-%     idxTrain = c.training(k) ;
-%     idxTest = c.test(k);
-%     
-%     for j=1:200
-%         if idxTrain(j)==1
-%             trainingdataKfold=[trainingdataKfold struct('Neutral',facesfinaleMDA(j).Neutral,'Expressive',facesfinaleMDA(j).Expressive)];
-%         end
-%         if idxTest(j)==1
-%             testingdataKfold=[testingdataKfold struct('Neutral',facesfinaleMDA(j).Neutral,'Expressive',facesfinaleMDA(j).Expressive)];
-%         end
-%     end
-%     
-%     [kfoldrow,kfoldcol]=size(trainingdataKfold);
-%     
-%     for n = 1:kfoldcol
-%         trainingSVMkfold(n*2-1,1) = struct('Label', -1, 'Data', (trainingdataKfold(n).Neutral).');
-%         trainingSVMkfold(n*2,1) = struct('Label', 1, 'Data', (trainingdataKfold(n).Expressive).');
-%     end
-%     
-%     [kfoldrowtest,kfoldcoltest]=size(testingdataKfold);
-%     
-%     for l = 1:kfoldcoltest
-%         testingSVMkfold(l*2-1,1) = struct('Label', -1, 'Data', (testingdataKfold(l).Neutral).');
-%         testingSVMkfold(l*2,1) = struct('Label', 1, 'Data', (testingdataKfold(l).Expressive).');
-%     end
-%     
-%     tablenew = struct2table(trainingSVMkfold); 
-%     sortedtable = sortrows(tablenew, 'Label'); 
-%     trainingsortedSVM = table2struct(sortedtable); 
-% 
-%     tablenewtest = struct2table(testingSVMkfold); 
-%     sortedtabletest = sortrows(tablenewtest, 'Label'); 
-%     testingsortedSVM = table2struct(sortedtabletest); 
-% 
-% [coltrain,~]=size(trainingSVMkfold);
-% 
-% [coltest,~]=size(testingSVMkfold);
-% 
-% 
-% [PredictedLabelSum,errorSVM]=KfoldKernelSVMsolver(trainingSVMkfold,testingSVMkfold,kerneltype,variable,variable);
-% 
-% errorSVMiter=errorSVMiter+errorSVM;
-%     
-% end
-% 
-% countvar=countvar+1;
-% 
-% avgerror(countvar)=errorSVMiter/k;
-%    
-% disp('Please Wait');
-% end
-% [~,idxparam]=min(avgerror(2:5));
-% allparam=[0.05 1.05 3.05 20];
-% parameterval=allparam(idxparam);
-% 
-% optimalparam=sprintf('\nOptimal Sigma from initialised set is %f',parameterval);
-% disp(optimalparam);
-% 
-%     case 3
-%         
-% for variable=[1.05 20]
-%     errorSVM=0;
-%     count=0;
-%     errorSVMiter=0;
-%     
-% for i=1:k
-%     idxTrain = c.training(k) ;
-%     idxTest = c.test(k);
-%     
-%     for j=1:200
-%         if idxTrain(j)==1
-%             trainingdataKfold=[trainingdataKfold struct('Neutral',facesfinaleMDA(j).Neutral,'Expressive',facesfinaleMDA(j).Expressive)];
-%         end
-%         if idxTest(j)==1
-%             testingdataKfold=[testingdataKfold struct('Neutral',facesfinaleMDA(j).Neutral,'Expressive',facesfinaleMDA(j).Expressive)];
-%         end
-%     end
-%     
-%     [kfoldrow,kfoldcol]=size(trainingdataKfold);
-%     
-%     for n = 1:kfoldcol
-%         trainingSVMkfold(n*2-1,1) = struct('Label', -1, 'Data', (trainingdataKfold(n).Neutral).');
-%         trainingSVMkfold(n*2,1) = struct('Label', 1, 'Data', (trainingdataKfold(n).Expressive).');
-%     end
-%     
-%     [kfoldrowtest,kfoldcoltest]=size(testingdataKfold);
-%     
-%     for l = 1:kfoldcoltest
-%         testingSVMkfold(l*2-1,1) = struct('Label', -1, 'Data', (testingdataKfold(l).Neutral).');
-%         testingSVMkfold(l*2,1) = struct('Label', 1, 'Data', (testingdataKfold(l).Expressive).');
-%     end
-%     
-%     tablenew = struct2table(trainingSVMkfold); 
-%     sortedtable = sortrows(tablenew, 'Label'); 
-%     trainingsortedSVM = table2struct(sortedtable); 
-% 
-%     tablenewtest = struct2table(testingSVMkfold); 
-%     sortedtabletest = sortrows(tablenewtest, 'Label'); 
-%     testingsortedSVM = table2struct(sortedtabletest); 
-% 
-% [coltrain,~]=size(trainingSVMkfold);
-% 
-% [coltest,~]=size(testingSVMkfold);
-% 
-% 
-% [PredictedLabelSum,errorSVM]=KfoldKernelSVMsolver(trainingSVMkfold,testingSVMkfold,kerneltype,variable,variable);
-% 
-% errorSVMiter=errorSVMiter+errorSVM;
-%     
-% end
-% 
-% countvar=countvar+1;
-% 
-% avgerror(countvar)=errorSVMiter/k;
-% 
-% disp('Please wait');
-% end
-% [~,idxparam]=min(avgerror(2:3));
-% allparam=[1.05 20];
-% parameterval=allparam(idxparam);
-% 
-% optimalparam=sprintf('\nOptimal r from initialised set is %f',parameterval);
-% disp(optimalparam);
-% end
+k=3;
+
+%For high k the program runs for a long time.
+
+%For the polynomial kernel, the program runs for a longer time than RBF
+
+
+
+
+kerneltype=input(' \nEnter the kernel type (2: RBF Kernel 3: Polynomial Kernel) \n');
+c = cvpartition(200,'KFold',k);
+trainingdataKfold=[];
+testingdataKfold=[];
+errorSVM=0;
+count=0;
+PredictedLabelSum=[];
+setiter=[0.1 0.7 1 3 15 50];
+iterationvar=exp(0.05):exp(1):exp(3.05);
+parameterval=0;
+avgerror=ones(5,1);
+
+countvar=1;
+
+switch kerneltype
+    
+    case 2
+        
+for variable=[0.05 1.05 3.05 20]
+    errorSVM=0;
+    count=0;
+    errorSVMiter=0;
+    
+for i=1:k
+    idxTrain = c.training(k) ;
+    idxTest = c.test(k);
+    
+    for j=1:200
+        if idxTrain(j)==1
+            trainingdataKfold=[trainingdataKfold struct('Neutral',facesfinaleMDA(j).Neutral,'Expressive',facesfinaleMDA(j).Expressive)];
+        end
+        if idxTest(j)==1
+            testingdataKfold=[testingdataKfold struct('Neutral',facesfinaleMDA(j).Neutral,'Expressive',facesfinaleMDA(j).Expressive)];
+        end
+    end
+    
+    [kfoldrow,kfoldcol]=size(trainingdataKfold);
+    
+    for n = 1:kfoldcol
+        trainingSVMkfold(n*2-1,1) = struct('Label', -1, 'Data', (trainingdataKfold(n).Neutral).');
+        trainingSVMkfold(n*2,1) = struct('Label', 1, 'Data', (trainingdataKfold(n).Expressive).');
+    end
+    
+    [kfoldrowtest,kfoldcoltest]=size(testingdataKfold);
+    
+    for l = 1:kfoldcoltest
+        testingSVMkfold(l*2-1,1) = struct('Label', -1, 'Data', (testingdataKfold(l).Neutral).');
+        testingSVMkfold(l*2,1) = struct('Label', 1, 'Data', (testingdataKfold(l).Expressive).');
+    end
+    
+    tablenew = struct2table(trainingSVMkfold); 
+    sortedtable = sortrows(tablenew, 'Label'); 
+    trainingsortedSVM = table2struct(sortedtable); 
+
+    tablenewtest = struct2table(testingSVMkfold); 
+    sortedtabletest = sortrows(tablenewtest, 'Label'); 
+    testingsortedSVM = table2struct(sortedtabletest); 
+
+[coltrain,~]=size(trainingSVMkfold);
+
+[coltest,~]=size(testingSVMkfold);
+
+
+[PredictedLabelSum,errorSVM]=KfoldKernelSVMsolver(trainingSVMkfold,testingSVMkfold,kerneltype,variable,variable);
+
+errorSVMiter=errorSVMiter+errorSVM;
+    
+end
+
+countvar=countvar+1;
+
+avgerror(countvar)=errorSVMiter/k;
+   
+disp('Please Wait');
+end
+[~,idxparam]=min(avgerror(2:5));
+allparam=[0.05 1.05 3.05 20];
+parameterval=allparam(idxparam);
+
+optimalparam=sprintf('\nOptimal Sigma from initialised set is %f',parameterval);
+disp(optimalparam);
+
+    case 3
+        
+for variable=[1.05 20]
+    errorSVM=0;
+    count=0;
+    errorSVMiter=0;
+    
+for i=1:k
+    idxTrain = c.training(k) ;
+    idxTest = c.test(k);
+    
+    for j=1:200
+        if idxTrain(j)==1
+            trainingdataKfold=[trainingdataKfold struct('Neutral',facesfinaleMDA(j).Neutral,'Expressive',facesfinaleMDA(j).Expressive)];
+        end
+        if idxTest(j)==1
+            testingdataKfold=[testingdataKfold struct('Neutral',facesfinaleMDA(j).Neutral,'Expressive',facesfinaleMDA(j).Expressive)];
+        end
+    end
+    
+    [kfoldrow,kfoldcol]=size(trainingdataKfold);
+    
+    for n = 1:kfoldcol
+        trainingSVMkfold(n*2-1,1) = struct('Label', -1, 'Data', (trainingdataKfold(n).Neutral).');
+        trainingSVMkfold(n*2,1) = struct('Label', 1, 'Data', (trainingdataKfold(n).Expressive).');
+    end
+    
+    [kfoldrowtest,kfoldcoltest]=size(testingdataKfold);
+    
+    for l = 1:kfoldcoltest
+        testingSVMkfold(l*2-1,1) = struct('Label', -1, 'Data', (testingdataKfold(l).Neutral).');
+        testingSVMkfold(l*2,1) = struct('Label', 1, 'Data', (testingdataKfold(l).Expressive).');
+    end
+    
+    tablenew = struct2table(trainingSVMkfold); 
+    sortedtable = sortrows(tablenew, 'Label'); 
+    trainingsortedSVM = table2struct(sortedtable); 
+
+    tablenewtest = struct2table(testingSVMkfold); 
+    sortedtabletest = sortrows(tablenewtest, 'Label'); 
+    testingsortedSVM = table2struct(sortedtabletest); 
+
+[coltrain,~]=size(trainingSVMkfold);
+
+[coltest,~]=size(testingSVMkfold);
+
+
+[PredictedLabelSum,errorSVM]=KfoldKernelSVMsolver(trainingSVMkfold,testingSVMkfold,kerneltype,variable,variable);
+
+errorSVMiter=errorSVMiter+errorSVM;
+    
+end
+
+countvar=countvar+1;
+
+avgerror(countvar)=errorSVMiter/k;
+
+disp('Please wait');
+end
+[~,idxparam]=min(avgerror(2:3));
+allparam=[1.05 20];
+parameterval=allparam(idxparam);
+
+optimalparam=sprintf('\nOptimal r from initialised set is %f',parameterval);
+disp(optimalparam);
+end
 
 %% Adaboost with Linear SVM (Takes time)
 
@@ -636,13 +633,13 @@ for i=1:sizeclassifiedada
     
 end
 
-errorada=sprintf('Percentage of error for Linear SVM Classifier with Adaboost is %f',(error/sizeclassifiedada)*100);
+errorada=sprintf('Percentage of error for Linear SVM Classifier with Adaboost and MDA is %f',(error/sizeclassifiedada)*100);
 disp(errorada);
 
 
 %%  PCA reduction
 
-PCAdim=100;
+PCAdim=500;
 
 dimnface=504;
 
@@ -710,12 +707,12 @@ end
 %% Bayes PCA
 
 [classifiedBayesPCA,valuesPCA,errorPCA]=Bayes(testingsortedPCA,meanPCA,covarPCA,NumtestPCA*2);
-bayestestingPCA=sprintf('Percentage of error for Bayes Classifier with PCA is %f',errorPCA);
+bayestestingPCA=sprintf('\nPercentage of error for Bayes Classifier with PCA is %f',errorPCA);
 disp(bayestestingPCA);
 
 %% KNN PCA
 
-kPCA=3;
+kPCA=7;
 [classifiedKNNPCA,testingarrayPCA,trainingarrayPCA,distancetruncatedPCA,indextruncatedPCA,labelsPCA,actuallabelsPCA,errorknnPCA]=KNN(testingsortedPCA,trainingsortedPCA,kPCA,NumtestPCA*2,400);
 knntestingPCA=sprintf('Percentage of error for KNN Classifier with PCA is %f',errorknnPCA);
 disp(knntestingPCA);
@@ -741,7 +738,7 @@ kerneltypePCA=input(' \nEnter the kernel type with PCA (2: RBF Kernel 3: Polynom
 SVMtestingPCA=sprintf('\nPercentage of error for Kernel SVM with PCA is %f',errorPCASVM);
 disp(SVMtestingPCA);
 
-%% Linear SVM and Adaboost with PCA trying
+%% Linear SVM and Adaboost with PCA (Takes time)
 
 
 filler=10;
@@ -881,7 +878,7 @@ disp(errorada);
  %% Classification task 1 Data Dataset (Less time consuming than POSE but higher error due to lower traintest samples)
     case 1
         
-        subset1=input('Enter Dataset (1:Data 2:Pose)\n');
+        subset1=input('Enter Dataset (1: Data 2: Pose)\n');
         
         switch subset1
             
@@ -1000,7 +997,7 @@ for i=1:n
 %     disp(det(covar(i).ClassCov));
 end
 
-%% Bayes P1
+%% Bayes P1 Data MDA
 
 [classifiedBayesP1,valuesP1,errorP1]=Bayes(testingMDA,meanMDA,covarMDA,NumtestMDA);
 
@@ -1008,17 +1005,16 @@ end
 
 bayestestingP1=sprintf('Percentage of error for Bayes Classifier with MDA for dataset DATA is %f',errorP1);
 disp(bayestestingP1);
-%% KNN P1
+%% KNN P1 Data MDA
 
 k=1;
 [classifiedKNN,testingarray,trainingarray,distancetruncated,indextruncated,labels,actuallabels,errorknn]=KNN(testingMDA,trainingMDA,k,NumtestMDA,600);
 knntesting=sprintf('Percentage of error for KNN Classifier with MDA for dataset DATA is %f',errorknn);
 disp(knntesting);
-%% Bayes P1 PCA 
 
-%%  PCA reduction
+%%  Bayes P1 Data PCA
 
-PCAdim=200;
+PCAdim=number;
 
 dimnface=504;
 
@@ -1084,7 +1080,7 @@ bayestestingPCA=sprintf('Percentage of error for Bayes Classifier with PCA for d
 disp(bayestestingPCA);
 
 
-%% KNN P1 PCA
+%% KNN P1 Data PCA
 
 k=1;
 [classifiedKNN,testingarray,trainingarray,distancetruncated,indextruncated,labels,actuallabels,errorknn]=KNN(testingPCA,trainingPCA,k,NumtestMDA,600);
@@ -1099,6 +1095,7 @@ posessamples=68;
 dimnpose=48*40;
 % size(pose)
 posesfinale=[];
+dimnredpose=40;
 
 
 for n=1:68
@@ -1176,7 +1173,7 @@ sortedtableMDA = sortrows(tablenewnew, 'Label');
 posesMDAmeansorted = table2struct(sortedtableMDA); 
 
 [meanwholeMDA,covarwholeMDA]=standardestimators(posesMDAmeansorted,68*13,1);
-[posesMDA,datavisualise,mean0,scatterbetween,scatterwithin,prior,eigenvalues,eigenvectors,eigenvaluesdiag,eigenvectorstr]=poseMDAsolver(posetemp,meanwholeMDA,covarwholeMDA,68,68);
+[posesMDA,datavisualise,mean0,scatterbetween,scatterwithin,prior,eigenvalues,eigenvectors,eigenvaluesdiag,eigenvectorstr]=poseMDAsolver(posetemp,meanwholeMDA,covarwholeMDA,68,dimnredpose);
 posesfinaleMDA=[];
 
 for n=1:68
@@ -1226,13 +1223,13 @@ testingsortedP1MDA = table2struct(sortedtabletest);
 [p,n]=size(covarMDApose);
 
 for i=1:n
-    while(det(covarMDApose(i).ClassCov) == 0)
-        lambda=0.5*ones(1,l);
+    while(det(covarMDApose(i).ClassCov) < 10^-5)
+        lambda=0.7*ones(1,l);
         covarMDApose(i).ClassCov=covarMDApose(i).ClassCov + diag(lambda);
     end
 end
 
-%% Bayes Pose P1 
+%% Bayes Pose P1 MDA
 
 [BayesPoseP1,~,errorP1pose]=NormalizedBayes(testingsortedP1MDA,meanMDApose,covarMDApose,Numtestpose*xMDA,10^4);
 
@@ -1241,16 +1238,16 @@ end
 bayestestingP1pose=sprintf('Percentage of error for Bayes Classifier with MDA for dataset POSE is %f',errorP1pose);
 disp(bayestestingP1pose);
 
-%% KNN Pose P1 
+%% KNN Pose P1 MDA
 
 k=3;
 [~,testingarray,trainingarray,distancetruncated,indextruncated,labels,actuallabelspose,errorknnpose]=KNN(testingsortedP1MDA,trainingP1poseMDA,k,NumtestMDA*5,NumtestMDA*13);
 knntestingpose=sprintf('Percentage of error for KNN Classifier with MDA for dataset POSE is %f',errorknnpose);
 disp(knntestingpose);
 
-%% Bayes Pose P1 PCA trying
+%% Bayes Pose P1 PCA 
 
-PCAdim=400;
+PCAdim=300;
 
 dimnface=1920;
 
@@ -1327,7 +1324,7 @@ param=10^4;
 bayestestingP1pose=sprintf('Percentage of error for Bayes Classifier with PCA for dataset POSE is %f',errorP1posePCA);
 disp(bayestestingP1pose);
 
-%% KNN Pose P1 PCA trying
+%% KNN Pose P1 PCA 
 
 k=1;
 [~,testingarray,trainingarray,distancetruncated,indextruncated,labels,actuallabelspose,errorknnpose]=KNN(testingsortedPCA,trainingsortedPCA,k,NumtestMDA*5,NumtestMDA*13);

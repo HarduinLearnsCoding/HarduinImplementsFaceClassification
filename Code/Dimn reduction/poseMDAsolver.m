@@ -26,7 +26,7 @@ for i=1:m
 end
 
 
-lambdaMDA=2*ones(1,covarsize);
+lambdaMDA=0.7*ones(1,covarsize);
 scatterwithin=scatterwithin + diag(lambdaMDA);
 
 
