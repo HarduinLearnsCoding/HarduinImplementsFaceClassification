@@ -1,3 +1,6 @@
+# Statistical Pattern Recognition (ENEE633)
+
+
 Implemented the following:
 
 1. Bayes Classifier 
