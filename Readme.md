@@ -4,13 +4,13 @@ No libraries were used to implement the following:
 
 1. **Classifiers**
 
-  A. Bayes Classifier 
+    A. Bayes Classifier 
 
-  B. KNN Classifier
+    B. KNN Classifier
 
-  C. Kernel SVM
+    C. Kernel SVM
 
-  D. AdaBoost SVM
+    D. AdaBoost SVM
 
 2. **Dimensionality Reduction**
 
