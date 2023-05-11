@@ -1,28 +1,31 @@
-# Statistical Pattern Recognition (ENEE633)
+# Implementing Face Classifier using Statistical Techniques
 
+No libraries were used to implement the following:
 
-Implemented the following:
+1. **Classifiers**
 
-1. Bayes Classifier 
+  1. Bayes Classifier 
 
-2. KNN Classifier
+  2. KNN Classifier
 
-3. Kernel SVM
+  3. Kernel SVM
 
-4. AdaBoost SVM
+  4. AdaBoost SVM
 
-5. PCA
+2. **Dimensionality Reduction**
 
-6. Multiclass LDA
+  1. PCA
 
-Datasets:
+  2. Multiclass LDA
 
-1. DATA
+3. **Datasets**
 
-2. POSE
+  1. DATA
 
-Classification task:
+  2. POSE
 
-1. Identify Subject
+4. **Classification task**
 
-2. Discriminate Neutral and Expressive faces
+  1. Identify the subject
+
+  2. Discriminate between three different expressions of a subject
