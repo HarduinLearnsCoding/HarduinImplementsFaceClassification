@@ -14,18 +14,18 @@ No libraries were used to implement the following:
 
 2. **Dimensionality Reduction**
 
-  A. PCA
+    A. PCA
 
-  B. Multiclass LDA
+    B. Multiclass LDA
 
 3. **Datasets**
 
-  A. DATA
+    A. DATA
 
-  B. POSE
+    B. POSE
 
 4. **Classification task**
 
-  A. Identify the subject
+    A. Identify the subject
 
-  B. Discriminate between three different expressions of a subject
+    B. Discriminate between three different expressions of a subject
