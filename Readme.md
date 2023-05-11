@@ -18,13 +18,15 @@ No libraries were used to implement the following:
 
     B. Multiclass LDA
 
-3. **Datasets**
+Additional information about the data and the classification task
+
+1. **Datasets**
 
     A. DATA
 
     B. POSE
 
-4. **Classification task**
+2. **Classification task**
 
     A. Identify the subject
 
