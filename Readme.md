@@ -4,28 +4,28 @@ No libraries were used to implement the following:
 
 1. **Classifiers**
 
-  1. Bayes Classifier 
+  A. Bayes Classifier 
 
-  2. KNN Classifier
+  B. KNN Classifier
 
-  3. Kernel SVM
+  C. Kernel SVM
 
-  4. AdaBoost SVM
+  D. AdaBoost SVM
 
 2. **Dimensionality Reduction**
 
-  1. PCA
+  A. PCA
 
-  2. Multiclass LDA
+  B. Multiclass LDA
 
 3. **Datasets**
 
-  1. DATA
+  A. DATA
 
-  2. POSE
+  B. POSE
 
 4. **Classification task**
 
-  1. Identify the subject
+  A. Identify the subject
 
-  2. Discriminate between three different expressions of a subject
+  B. Discriminate between three different expressions of a subject
